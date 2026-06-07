@@ -13,6 +13,19 @@ async function startServer() {
   const app = express();
   app.use(express.json());
 
+  // Health check for deployment monitoring
+  app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
+  // Handle favicon explicitly to prevent 500s on browsers requesting it
+  app.get('/favicon.ico', (req, res) => {
+    res.status(204).end();
+  });
+  app.get('/favicon.png', (req, res) => {
+    res.status(204).end();
+  });
+
   // API Proxy for GitHub Stats
   app.get('/api/github-stats', async (req, res) => {
     try {
@@ -29,9 +42,18 @@ async function startServer() {
       }
       
       const [userRes, reposRes, eventsRes, contributionsRes] = await Promise.all([
-        axios.get(`https://api.github.com/users/${GITHUB_USERNAME}`, { headers }),
-        axios.get(`https://api.github.com/users/${GITHUB_USERNAME}/repos?sort=updated&per_page=100`, { headers }),
-        axios.get(`https://api.github.com/users/${GITHUB_USERNAME}/events?per_page=100`, { headers }),
+        axios.get(`https://api.github.com/users/${GITHUB_USERNAME}`, { headers }).catch(err => {
+          console.error('GitHub User API Error:', err.message);
+          return { data: { login: GITHUB_USERNAME, public_repos: 0, bio: 'Developer' } };
+        }),
+        axios.get(`https://api.github.com/users/${GITHUB_USERNAME}/repos?sort=updated&per_page=100`, { headers }).catch(err => {
+          console.error('GitHub Repos API Error:', err.message);
+          return { data: [] };
+        }),
+        axios.get(`https://api.github.com/users/${GITHUB_USERNAME}/events?per_page=100`, { headers }).catch(err => {
+          console.error('GitHub Events API Error:', err.message);
+          return { data: [] };
+        }),
         axios.get(`https://github-contributions-api.deno.dev/${GITHUB_USERNAME}.json`).catch(err => {
           console.error('Contributions API Error:', err.message);
           return { data: { total: 0, contributions: [] } };
@@ -102,13 +124,15 @@ async function startServer() {
       res.json(stats);
     } catch (error: any) {
       console.error('GitHub API Fatal Error:', error.response?.data || error.message);
-      res.status(500).json({ 
-        error: 'Failed to fetch GitHub data',
-        details: error.response?.data || error.message,
-        debug: {
-          tokenLoaded: !!process.env.GITHUB_TOKEN,
-          apiConnected: false
-        }
+      // Fallback response instead of 500
+      res.json({ 
+        error: 'GitHub data partially unavailable',
+        details: 'Displaying cached or default metrics',
+        user: { login: GITHUB_USERNAME, publicRepos: 0, bio: 'Developer' },
+        repos: [],
+        languages: {},
+        contributions: { total: 0, weeks: [] },
+        activity: { recentEvents: 0 }
       });
     }
   });
@@ -121,12 +145,26 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
+    // In production, server.cjs is in /dist, index.html is also in /dist
     const distPath = path.join(process.cwd(), 'dist');
+    const indexFile = path.join(distPath, 'index.html');
+    
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+      res.sendFile(indexFile, (err) => {
+        if (err) {
+          console.error('Error sending index.html:', err);
+          res.status(500).send('Infrastructure Error: index.html not found');
+        }
+      });
     });
   }
+
+  // Global Error Handler
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error('Unhandled Server Error:', err);
+    res.status(500).json({ error: 'Internal Server Error', message: err.message });
+  });
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);

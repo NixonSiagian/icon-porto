@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { SmoothScroll } from './components/layout/SmoothScroll';
 import { Navbar } from './components/layout/Navbar';
 import { CustomCursor } from './components/ui/CustomCursor';
@@ -23,9 +24,25 @@ export default function App() {
     restDelta: 0.001
   });
 
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const startTime = performance.now();
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768 || ('ontouchstart' in window));
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    console.log(`[PERF] Page Load Time: ${Math.round(performance.now() - startTime)}ms`);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   return (
     <SmoothScroll>
-      <CustomCursor />
+      {!isMobile && <CustomCursor />}
       
       {/* Global Scroll Progress Bar */}
       <motion.div 
@@ -33,16 +50,16 @@ export default function App() {
         style={{ scaleX }}
       />
 
-      {/* Dynamic Starfield Background */}
-      <Starfield />
+      {/* Dynamic Starfield Background - Optimized */}
+      <Starfield isMobile={isMobile} />
 
-      <div className="fixed inset-0 pixel-grid pointer-events-none opacity-[0.02] z-[9999]" />
+      <div className="fixed inset-0 pixel-grid pointer-events-none opacity-[0.01] z-[9999]" />
       
-      {/* Drifting Background Particles */}
-      {[...Array(15)].map((_, i) => (
+      {/* Drifting Background Particles - Reduced on mobile */}
+      {[...Array(isMobile ? 5 : 15)].map((_, i) => (
         <motion.div
            key={i}
-           className="fixed w-1 h-1 bg-white/10 rounded-full blur-[1px] pointer-events-none z-0"
+           className="fixed w-1 h-1 bg-white/10 rounded-full blur-[1px] pointer-events-none z-0 will-change-transform"
            initial={{ 
              x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1000), 
              y: Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 1000),
@@ -63,42 +80,42 @@ export default function App() {
 
       <Navbar />
       <main className="relative flex flex-col w-full bg-workspace-warm min-h-screen">
-        <Hero />
+        <Hero isMobile={isMobile} />
         
         <ScrollReveal>
-          <ParallaxSection offset={100}>
+          <ParallaxSection offset={100} isMobile={isMobile}>
             <InsideWorkspace />
           </ParallaxSection>
         </ScrollReveal>
         
         <ScrollReveal delay={0.2}>
-          <ParallaxSection offset={80}>
+          <ParallaxSection offset={80} isMobile={isMobile}>
             <DeveloperDNA />
           </ParallaxSection>
         </ScrollReveal>
         
         <ScrollReveal>
-          <ProjectLaboratory />
+          <ProjectLaboratory isMobile={isMobile} />
         </ScrollReveal>
 
         <ScrollReveal>
-          <GithubWarRoom />
+          <GithubWarRoom isMobile={isMobile} />
         </ScrollReveal>
 
         <ScrollReveal>
-          <ParallaxSection offset={120}>
+          <ParallaxSection offset={120} isMobile={isMobile}>
             <DeveloperJourney />
           </ParallaxSection>
         </ScrollReveal>
 
         <ScrollReveal>
-          <ParallaxSection offset={100}>
+          <ParallaxSection offset={100} isMobile={isMobile}>
             <AchievementShowcase />
           </ParallaxSection>
         </ScrollReveal>
 
         <ScrollReveal>
-          <ParallaxSection offset={60}>
+          <ParallaxSection offset={60} isMobile={isMobile}>
             <CommunicationTerminal />
           </ParallaxSection>
         </ScrollReveal>

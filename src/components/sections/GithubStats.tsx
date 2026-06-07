@@ -6,13 +6,19 @@ import { GlassCard } from '../ui/GlassCard';
 import axios from 'axios';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 
-export function GithubWarRoom() {
+export function GithubWarRoom({ isMobile = false }: { isMobile?: boolean }) {
   const [stats, setStats] = useState<GitHubStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDebug, setShowDebug] = useState(false);
 
   useEffect(() => {
-    axios.get('/api/github-stats').then(res => setStats(res.data)).finally(() => setLoading(false));
+    const start = performance.now();
+    axios.get('/api/github-stats')
+      .then(res => {
+        setStats(res.data);
+        console.log(`[PERF] GitHub Stats Loaded: ${Math.round(performance.now() - start)}ms`);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   if (loading) return (
@@ -32,14 +38,16 @@ export function GithubWarRoom() {
     activity: Math.floor(Math.random() * 50) + 10
   })).reverse();
 
-  const VELOCITY_DATA = stats.contributions.weeks?.slice(-12).map((week, index) => ({
+  const VELOCITY_DATA = stats.contributions.weeks?.slice(isMobile ? -6 : -12).map((week, index) => ({
     name: `W${index + 1}`,
     count: week.days.reduce((sum, day) => sum + (day.count || 0), 0),
     fullDate: week.days[0].date
   })) || [];
 
+  const displayWeeks = isMobile ? stats.contributions.weeks?.slice(-20) : stats.contributions.weeks;
+
   return (
-    <section id="war-room" className="py-32 px-6 relative overflow-hidden bg-black/20">
+    <section id="war-room" className="py-24 sm:py-32 px-6 relative overflow-hidden bg-black/20">
       <div className="max-w-7xl mx-auto relative z-10">
         
         {/* Command Header */}
@@ -112,17 +120,17 @@ export function GithubWarRoom() {
                     
                     <div className="overflow-x-auto pb-4 custom-scrollbar">
                         <div className="flex gap-1.5 min-w-max">
-                            {stats.contributions.weeks?.map((week, wIdx) => (
+                            {displayWeeks?.map((week, wIdx) => (
                                 <div key={wIdx} className="flex flex-col gap-1.5">
                                     {week.days?.map((day, dIdx) => (
                                         <motion.div
                                             key={`${wIdx}-${dIdx}`}
-                                            whileHover={{ 
+                                            whileHover={!isMobile ? { 
                                                 scale: 1.4,
                                                 boxShadow: '0 0 20px var(--glow-color)',
                                                 zIndex: 50
-                                            }}
-                                            className="w-3.5 h-3.5 rounded-[2px] transition-all cursor-crosshair relative group"
+                                            } : {}}
+                                            className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-[1px] sm:rounded-[2px] transition-all cursor-crosshair relative group will-change-transform"
                                             style={{ 
                                                 backgroundColor: 
                                                     day.level === 0 ? 'rgba(255,255,255,0.02)' :
@@ -130,13 +138,16 @@ export function GithubWarRoom() {
                                                     day.level === 2 ? 'rgba(255,158,11,0.35)' :
                                                     day.level === 3 ? 'rgba(255,158,11,0.65)' :
                                                     'rgba(255,158,11,1)',
-                                                ['--glow-color' as any]: '#f59e0b'
+                                                ['--glow-color' as any]: '#f59e0b',
+                                                transform: 'translate3d(0,0,0)'
                                             }}
                                         >
-                                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-2 bg-black border border-white/10 rounded-lg text-[9px] font-mono whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-[60] shadow-2xl">
-                                                <span className="text-workspace-highlight font-bold">{day.date}</span><br />
-                                                &gt; {day.count} Commits
-                                            </div>
+                                            {!isMobile && (
+                                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-2 bg-black border border-white/10 rounded-lg text-[9px] font-mono whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-[60] shadow-2xl">
+                                                    <span className="text-workspace-highlight font-bold">{day.date}</span><br />
+                                                    &gt; {day.count} Commits
+                                                </div>
+                                            )}
                                         </motion.div>
                                     ))}
                                 </div>

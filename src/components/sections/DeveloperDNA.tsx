@@ -21,14 +21,14 @@ const RADAR_DATA = [
   { subject: 'Architecture', A: 92, fullMark: 100 },
 ];
 
-export function DeveloperDNA() {
+export function DeveloperDNA({ isMobile = false }: { isMobile?: boolean }) {
   return (
-    <section id="dna" className="py-32 px-6 bg-black/20">
+    <section id="dna" className="py-24 sm:py-32 px-6 bg-black/20">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-10 mb-24">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-10 mb-20 sm:mb-24">
             <div className="space-y-4">
             <div className="h-0.5 w-12 bg-workspace-highlight/30" />
-            <h2 className="text-5xl font-black font-display tracking-tight text-white uppercase tracking-tighter leading-none">SKILLS & EXPERTISE</h2>
+            <h2 className="text-4xl sm:text-5xl font-black font-display tracking-tight text-white uppercase tracking-tighter leading-none">SKILLS & EXPERTISE</h2>
             <p className="text-slate-500 text-base leading-relaxed max-w-xl font-light">
               A comprehensive toolkit for building robust, scalable, and immersive digital solutions.
             </p>
@@ -42,10 +42,10 @@ export function DeveloperDNA() {
              </div>
              
              {/* Radar Chart within DNA Header */}
-             <div className="h-[250px] w-full md:w-[350px] shrink-0 relative group">
-                <div className="absolute inset-0 bg-workspace-highlight/5 blur-[40px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+             <div className="h-[200px] sm:h-[250px] w-full md:w-[350px] shrink-0 relative group">
+                <div className={`absolute inset-0 bg-workspace-highlight/5 ${!isMobile ? 'blur-[40px]' : ''} rounded-full opacity-0 group-hover:opacity-100 transition-opacity`} />
                 <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart cx="50%" cy="50%" outerRadius="80%" data={RADAR_DATA}>
+                    <RadarChart cx="50%" cy="50%" outerRadius={isMobile ? "70%" : "80%"} data={RADAR_DATA}>
                         <PolarGrid stroke="#FFFFFF10" />
                         <PolarAngleAxis 
                             dataKey="subject" 
@@ -57,6 +57,7 @@ export function DeveloperDNA() {
                             stroke="#f59e0b"
                             fill="#f59e0b"
                             fillOpacity={0.3}
+                            isAnimationActive={!isMobile} // Performance optimization
                         />
                     </RadarChart>
                 </ResponsiveContainer>
@@ -64,9 +65,9 @@ export function DeveloperDNA() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {SKILLS.map((skill, i) => (
-            <SkillCard key={skill.name} skill={skill} index={i} />
+            <SkillCard key={skill.name} skill={skill} index={i} isMobile={isMobile} />
           ))}
         </div>
       </div>
@@ -74,31 +75,32 @@ export function DeveloperDNA() {
   );
 }
 
-function SkillCard({ skill, index }: { skill: any, index: number }) {
+function SkillCard({ skill, index, isMobile }: { skill: any, index: number, isMobile: boolean }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: isMobile ? 10 : 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: index * 0.1 }}
+      viewport={{ once: true, margin: "-50px" }}
+      transition={{ delay: isMobile ? 0 : index * 0.1, duration: 0.8 }}
+      className="will-change-transform"
     >
-      <GlassCard className="p-10 group hover:border-workspace-highlight/20 transition-all duration-500 overflow-hidden relative">
+      <GlassCard className="p-8 sm:p-10 group hover:border-workspace-highlight/20 transition-all duration-500 overflow-hidden relative">
         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-white/[0.02] to-transparent -z-10 rounded-full -translate-y-1/2 translate-x-1/2" />
         
-        <div className="flex justify-between items-start mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+        <div className="flex justify-between items-start mb-6 sm:mb-8">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 will-change-transform">
             {skill.icon}
           </div>
           <div className="text-right">
             <div className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-1">Proficiency</div>
-            <div className="text-3xl font-black text-white">{skill.level}%</div>
+            <div className="text-2xl sm:text-3xl font-black text-white">{skill.level}%</div>
           </div>
         </div>
 
         <div className="space-y-4">
           <div>
-            <h3 className="text-2xl font-bold group-hover:text-workspace-highlight transition-colors">{skill.name}</h3>
-            <p className="text-xs text-slate-500 font-mono uppercase tracking-widest">{skill.sub}</p>
+            <h3 className="text-xl sm:text-2xl font-bold group-hover:text-workspace-highlight transition-colors">{skill.name}</h3>
+            <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">{skill.sub}</p>
           </div>
 
           <div className="space-y-2">
@@ -106,7 +108,7 @@ function SkillCard({ skill, index }: { skill: any, index: number }) {
                 <motion.div 
                     initial={{ width: 0 }}
                     whileInView={{ width: `${skill.level}%` }}
-                    transition={{ delay: index * 0.1 + 0.3, duration: 1.5, ease: "easeOut" }}
+                    transition={{ delay: isMobile ? 0.1 : index * 0.1 + 0.3, duration: 1.5, ease: "easeOut" }}
                     className={`h-full bg-gradient-to-r ${skill.color} rounded-full`}
                 />
             </div>

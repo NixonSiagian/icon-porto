@@ -14,27 +14,28 @@ const LAYERS = [
   { src: ASSETS.TYPING, depth: 0.8, opacity: 1, alt: 'Developer Foreground', scrollDepth: 0.6 },
 ];
 
-export function WorkspaceScene() {
+export function WorkspaceScene({ isMobile = false }: { isMobile?: boolean }) {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   
   const { scrollYProgress } = useScroll();
 
   const handleMouseMove = (e: React.MouseEvent) => {
+    if (isMobile) return;
     const x = (e.clientX / window.innerWidth) - 0.5;
     const y = (e.clientY / window.innerHeight) - 0.5;
     setMousePos({ x, y });
   };
 
   const handleImageError = (src: string) => {
-    console.error(`[IMAGE_LOAD_ERROR] Failed to load layer: ${src}`);
+    console.error(`[PERF][IMAGE_ERROR] Failed to load: ${src}`);
   };
 
   return (
     <div 
       ref={containerRef}
-      onMouseMove={handleMouseMove}
-      className="absolute inset-0 w-full h-full overflow-hidden bg-black z-0"
+      onMouseMove={!isMobile ? handleMouseMove : undefined}
+      className="absolute inset-0 w-full h-full overflow-hidden bg-black z-0 will-change-transform"
     >
       {/* Background Layers */}
       <div className="absolute inset-0 z-0">
@@ -45,9 +46,9 @@ export function WorkspaceScene() {
             return (
                 <motion.div
                     key={index}
-                    className="absolute inset-[-20%] pointer-events-none"
-                    style={{ y: scrollY, scale }}
-                    animate={{
+                    className="absolute inset-[-20%] pointer-events-none will-change-transform"
+                    style={{ y: scrollY, scale, transform: 'translate3d(0,0,0)' }}
+                    animate={!isMobile ? {
                         x: [
                           mousePos.x * layer.depth * 120,
                           (mousePos.x * layer.depth * 120) + (Math.sin(Date.now() / 4000 + index) * 5)
@@ -56,7 +57,7 @@ export function WorkspaceScene() {
                           0,
                           Math.cos(Date.now() / 4000 + index) * 10
                         ]
-                    }}
+                    } : {}}
                     transition={{ 
                       x: { type: "spring", stiffness: 15, damping: 40 },
                       y: { duration: 8 + index, repeat: Infinity, ease: "easeInOut" }
@@ -65,29 +66,36 @@ export function WorkspaceScene() {
                     <img 
                         src={layer.src} 
                         alt={layer.alt}
+                        loading="eager" // Hero critical
                         onError={() => handleImageError(layer.src)}
                         className="w-full h-full object-cover select-none brightness-[0.85]"
                         style={{ opacity: layer.opacity }}
+                        width={1920}
+                        height={1080}
                     />
                 </motion.div>
             );
         })}
       </div>
 
-      {/* Visual Effects Overlay */}
+      {/* Visual Effects Overlay - Simplified on Mobile */}
       <div className="absolute inset-0 z-10 pointer-events-none">
-        <div className="absolute top-[40%] left-[20%] w-[60%] h-[40%] bg-workspace-highlight/5 blur-[120px] rounded-full animate-pulse opacity-40 mix-blend-screen" />
+        <div className={`absolute top-[40%] left-[20%] w-[60%] h-[40%] bg-workspace-highlight/5 blur-[120px] rounded-full opacity-40 mix-blend-screen ${!isMobile ? 'animate-pulse' : ''}`} />
+        
         {/* Soft Vignette and Gradient Blend */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-workspace-warm" />
         <div className="absolute inset-0 bg-radial-vignette opacity-60" />
         
-        {/* Environmental Atmosphere */}
-        <div className="dust-particles absolute inset-0 opacity-[0.1]" />
-        <div className="rain-container absolute inset-0 opacity-[0.05] mix-blend-overlay" />
+        {!isMobile && (
+          <>
+            <div className="dust-particles absolute inset-0 opacity-[0.1]" />
+            <div className="rain-container absolute inset-0 opacity-[0.05] mix-blend-overlay" />
+          </>
+        )}
       </div>
 
       {/* Grid Texture */}
-      <div className="absolute inset-0 opacity-[0.03] scanlines z-20 pointer-events-none" />
+      {!isMobile && <div className="absolute inset-0 opacity-[0.03] scanlines z-20 pointer-events-none" />}
     </div>
   );
 }

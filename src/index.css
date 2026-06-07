@@ -18,6 +18,16 @@
 @layer base {
   body {
     @apply bg-workspace-warm text-slate-200 antialiased selection:bg-cyber-blue/30 overflow-x-hidden font-sans;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  section {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 500px;
+  }
+  
+  #hero, .hero-section {
+    content-visibility: visible;
   }
 
   ::-webkit-scrollbar {
@@ -36,15 +46,21 @@
 }
 
 .glass {
-  @apply backdrop-blur-xl bg-white/[0.03] border border-white/10;
+  @apply backdrop-blur-lg bg-white/[0.03] border border-white/10;
+}
+
+@media (max-width: 768px) {
+  .glass, .glass-dark, .glass-premium {
+    backdrop-filter: blur(8px);
+  }
 }
 
 .glass-dark {
-  @apply bg-black/40 backdrop-blur-2xl border border-white/5;
+  @apply bg-black/40 backdrop-blur-xl border border-white/5;
 }
 
 .glass-premium {
-  @apply backdrop-blur-2xl bg-black/40 border border-white/5 shadow-2xl;
+  @apply backdrop-blur-xl bg-black/40 border border-white/5 shadow-xl;
 }
 
 .text-gradient {
@@ -104,19 +120,20 @@
 }
 
 @keyframes rain {
-  from { transform: translateY(-100%); }
-  to { transform: translateY(100%); }
+  from { transform: translate3d(0, -100%, 0); }
+  to { transform: translate3d(0, 100%, 0); }
 }
 
 .dust-particles {
   background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
   background-size: 100px 100px;
   animation: float-dust 20s linear infinite;
+  will-change: transform;
 }
 
 @keyframes float-dust {
-  from { transform: translate(0, 0); }
-  to { transform: translate(50px, -50px); }
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(50px, -50px, 0); }
 }
 
 .scanlines {
@@ -179,40 +196,22 @@
 }
 
 @keyframes star-drift {
-  from { transform: translate(0, 0); }
-  to { transform: translate(-50%, -50%); }
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-33.33%, -33.33%, 0); }
 }
 
 @keyframes glitch-anim {
-  0% {
-    clip-path: inset(80% 0 0 0);
-    transform: translate(-5px, -5px);
-  }
-  20% {
-    clip-path: inset(20% 0 50% 0);
-    transform: translate(5px, 5px);
-  }
-  40% {
-    clip-path: inset(50% 0 30% 0);
-    transform: translate(-5px, 5px);
-  }
-  60% {
-    clip-path: inset(10% 0 70% 0);
-    transform: translate(5px, -5px);
-  }
-  80% {
-    clip-path: inset(40% 0 40% 0);
-    transform: translate(-5px, -5px);
-  }
-  100% {
-    clip-path: inset(80% 0 0 0);
-    transform: translate(5px, 5px);
-  }
+  0% { clip-path: inset(80% 0 0 0); transform: translate3d(-5px, -5px, 0); }
+  20% { clip-path: inset(20% 0 50% 0); transform: translate3d(5px, 5px, 0); }
+  40% { clip-path: inset(50% 0 30% 0); transform: translate3d(-5px, 5px, 0); }
+  60% { clip-path: inset(10% 0 70% 0); transform: translate3d(5px, -5px, 0); }
+  80% { clip-path: inset(40% 0 40% 0); transform: translate3d(-5px, -5px, 0); }
+  100% { clip-path: inset(80% 0 0 0); transform: translate3d(5px, 5px, 0); }
 }
 
 .glitch-hover:hover .glitch-overlay {
   animation: glitch-anim 0.3s infinite linear alternate-reverse;
-  opacity: 0.5;
+  opacity: 0.3;
 }
 
 .vertical-text {
