@@ -1,0 +1,6 @@
+{
+  "name": "Nixon Siagian Portfolio",
+  "description": "Ultra-premium futuristic developer portfolio for Nixon Siagian featuring 3D visuals, space-themed aesthetics, and real-time GitHub integration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
